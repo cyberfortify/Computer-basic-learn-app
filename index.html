@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Computer Basics — Interactive Learning</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --text: #e8e8f0;
+    --muted: #8888aa;
+    --glow: rgba(108,99,255,0.3);
+    --radius: 16px;
+    --transition: all .35s cubic-bezier(.4,0,.2,1);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* ── STARS ── */
+  #stars {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 20% 50%, #1a0533 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, #001a33 0%, transparent 60%), #0a0a0f;
+  }
+
+  /* ── SIDEBAR NAV ── */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+    background: rgba(10,10,15,0.95); backdrop-filter: blur(20px);
+    border-right: 1px solid var(--border);
+    z-index: 100; display: flex; flex-direction: column;
+    padding: 1.5rem 1rem;
+    transform: translateX(0);
+    transition: var(--transition);
+  }
+  .sidebar-logo {
+    font-size: 1.2rem; font-weight: 800; color: var(--accent);
+    margin-bottom: 2rem; padding: 0 .5rem;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .sidebar-logo span { color: var(--accent2); }
+  .sidebar-section { font-size: .65rem; text-transform: uppercase;
+    letter-spacing: .1em; color: var(--muted); padding: .5rem .5rem .3rem; margin-top: .5rem; }
+  .sidebar-link {
+    display: flex; align-items: center; gap: .7rem;
+    padding: .65rem .8rem; border-radius: 10px; cursor: pointer;
+    font-size: .85rem; color: var(--muted); transition: var(--transition);
+    border: none; background: none; width: 100%; text-align: left;
+  }
+  .sidebar-link:hover { background: var(--card); color: var(--text); }
+  .sidebar-link.active { background: rgba(108,99,255,.15); color: var(--accent); }
+  .sidebar-link .s-icon { font-size: 1rem; width: 20px; text-align: center; }
+  .sidebar-progress {
+    margin-top: auto; padding: .8rem; background: var(--card);
+    border: 1px solid var(--border); border-radius: 12px;
+  }
+  .sidebar-progress-label { font-size: .72rem; color: var(--muted); margin-bottom: .5rem;
+    display: flex; justify-content: space-between; }
+  .sidebar-progress-bar {
+    height: 5px; background: var(--border); border-radius: 3px; overflow: hidden;
+  }
+  .sidebar-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 3px; transition: width .6s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+
+  /* Hamburger for small screens */
+  .hamburger {
+    display: none; position: fixed; top: 1rem; left: 1rem; z-index: 200;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; width: 42px; height: 42px;
+    cursor: pointer; flex-direction: column; align-items: center;
+    justify-content: center; gap: 5px; transition: var(--transition);
+  }
+  .hamburger span {
+    display: block; width: 18px; height: 2px;
+    background: var(--text); border-radius: 2px; transition: var(--transition);
+  }
+  .hamburger:hover { border-color: var(--accent); }
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    z-index: 99; backdrop-filter: blur(4px);
+  }
+  .sidebar-overlay.open { display: block; }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: 240px;
+    min-height: 100vh;
+    position: relative; z-index: 1;
+    transition: var(--transition);
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(10,10,15,.85); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem; height: 58px;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .topbar-title { font-size: 1rem; font-weight: 700; flex: 1; }
+  .topbar-search {
+    display: flex; align-items: center; gap: .5rem;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: .4rem .8rem;
+  }
+  .topbar-search input {
+    background: none; border: none; color: var(--text);
+    font-size: .85rem; width: 180px; outline: none;
+  }
+  .topbar-search input::placeholder { color: var(--muted); }
+
+  /* ── PAGE SECTIONS ── */
+  .page { display: none; padding: 2.5rem 2rem; animation: fadeIn .4s ease; }
+  .page.active { display: block; }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes slideInLeft { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes scaleIn { from { opacity:0; transform:scale(.93); } to { opacity:1; transform:scale(1); } }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 3rem 0 2rem;
+    animation: fadeIn .5s ease;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(108,99,255,.12); border: 1px solid rgba(108,99,255,.3);
+    border-radius: 50px; padding: .35rem .9rem; font-size: .78rem; color: var(--accent);
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 { font-size: clamp(2rem, 5vw, 3.8rem); font-weight: 800; line-height: 1.15; }
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p { margin-top: 1rem; color: var(--muted); font-size: 1rem; line-height: 1.7; max-width: 500px; }
+  .hero-btns { margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #9c8fff);
+    color: #fff; border: none; padding: .8rem 1.8rem;
+    border-radius: 12px; font-size: .95rem; font-weight: 600;
+    cursor: pointer; transition: var(--transition);
+    box-shadow: 0 0 24px var(--glow);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px var(--glow); }
+  .btn-outline {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text); padding: .8rem 1.8rem;
+    border-radius: 12px; font-size: .95rem; cursor: pointer; transition: var(--transition);
+  }
+  .btn-outline:hover { border-color: var(--accent); background: rgba(108,99,255,.08); }
+
+  /* ── STAT CARDS ── */
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin: 2rem 0; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.2rem 1.4rem;
+    transition: var(--transition); position: relative; overflow: hidden;
+  }
+  .stat-card::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--card-accent, var(--accent));
+  }
+  .stat-card:hover { transform: translateY(-3px); border-color: var(--card-accent, var(--accent)); }
+  .stat-card .s-val { font-size: 2rem; font-weight: 800; color: var(--card-accent, var(--accent)); }
+  .stat-card .s-label { font-size: .78rem; color: var(--muted); margin-top: .2rem; }
+  .stat-card .s-icon { font-size: 1.5rem; float: right; opacity: .4; }
+
+  /* ── SECTION TITLE ── */
+  .sec-title { font-size: 1.4rem; font-weight: 700; margin-bottom: .4rem; }
+  .sec-sub { color: var(--muted); font-size: .85rem; margin-bottom: 1.8rem; }
+
+  /* ── MODULES GRID ── */
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.2rem;
+  }
+  .module-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem; cursor: pointer;
+    transition: var(--transition); position: relative; overflow: hidden;
+  }
+  .module-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--card-color, var(--accent)), transparent 60%);
+    opacity: 0; transition: var(--transition);
+  }
+  .module-card:hover { transform: translateY(-4px); border-color: var(--card-color, var(--accent)); box-shadow: 0 8px 32px rgba(0,0,0,.3); }
+  .module-card:hover::before { opacity: .07; }
+  .module-card:active { transform: scale(.98); }
+  .module-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; margin-bottom: .9rem;
+  }
+  .module-card h3 { font-size: 1rem; margin-bottom: .4rem; }
+  .module-card p { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+  .module-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; }
+  .module-badge {
+    font-size: .68rem; padding: .2rem .6rem; border-radius: 20px;
+    background: rgba(108,99,255,.18); color: var(--accent);
+  }
+  .module-badge.done { background: rgba(67,233,123,.18); color: var(--accent3); }
+  .bookmark-btn {
+    background: none; border: none; font-size: 1rem; cursor: pointer;
+    color: var(--muted); transition: var(--transition); line-height: 1;
+  }
+  .bookmark-btn:hover, .bookmark-btn.active { color: var(--accent4); transform: scale(1.2); }
+
+  /* ── LESSON OVERLAY ── */
+  .overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.75); backdrop-filter: blur(12px);
+    align-items: flex-start; justify-content: center;
+    padding: 1.5rem; overflow-y: auto;
+  }
+  .overlay.open { display: flex; }
+  .lesson-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 22px; width: 100%; max-width: 860px;
+    margin: auto; animation: scaleIn .3s cubic-bezier(.4,0,.2,1);
+    position: relative;
+  }
+  .lesson-header {
+    position: sticky; top: 0; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.3rem 1.8rem; display: flex; align-items: center; gap: 1rem;
+    border-radius: 22px 22px 0 0; z-index: 10;
+  }
+  .lesson-header h2 { flex: 1; font-size: 1.2rem; }
+  .lesson-header-actions { display: flex; gap: .5rem; }
+  .lh-btn {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); width: 36px; height: 36px; border-radius: 50%;
+    font-size: 1rem; cursor: pointer; transition: var(--transition);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lh-btn:hover { border-color: var(--accent); }
+  .lh-btn.bookmarked { color: var(--accent4); border-color: var(--accent4); }
+  .close-btn:hover { background: var(--accent2); border-color: var(--accent2); }
+
+  .lesson-tabs {
+    display: flex; gap: .3rem; padding: 1rem 1.8rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .l-tab {
+    padding: .5rem 1rem; border-radius: 8px 8px 0 0; font-size: .82rem;
+    cursor: pointer; background: none; border: none; color: var(--muted);
+    transition: var(--transition); border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .l-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .lesson-body { padding: 1.8rem; }
+  .lesson-tab-content { display: none; }
+  .lesson-tab-content.active { display: block; animation: fadeIn .3s ease; }
+
+  /* Notes area */
+  .notes-area {
+    width: 100%; min-height: 200px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 1rem; color: var(--text); font-size: .9rem;
+    font-family: inherit; resize: vertical; outline: none;
+    transition: var(--transition); line-height: 1.7;
+  }
+  .notes-area:focus { border-color: var(--accent); }
+  .notes-save-btn {
+    margin-top: .8rem; background: linear-gradient(135deg, var(--accent), #9c8fff);
+    color: #fff; border: none; padding: .6rem 1.4rem; border-radius: 10px;
+    font-size: .85rem; font-weight: 600; cursor: pointer; transition: var(--transition);
+  }
+  .notes-save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--glow); }
+  .notes-saved-msg {
+    display: inline-block; margin-left: .8rem; font-size: .8rem;
+    color: var(--accent3); opacity: 0; transition: opacity .3s;
+  }
+
+  .lesson-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.8rem; border-top: 1px solid var(--border);
+    gap: .8rem; flex-wrap: wrap;
+  }
+  .lesson-nav button {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); padding: .6rem 1.2rem; border-radius: 10px;
+    cursor: pointer; transition: var(--transition); font-size: .85rem;
+  }
+  .lesson-nav button:hover { border-color: var(--accent); }
+  .lesson-nav .mark-done {
+    background: linear-gradient(135deg, var(--accent3), #22c55e);
+    border-color: transparent; color: #000; font-weight: 700;
+  }
+
+  /* ── VISUAL COMPONENTS ── */
+  .visual-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.5rem; margin: 1.2rem 0;
+  }
+  .visual-box h4 { margin-bottom: 1rem; color: var(--accent); font-size: .9rem; text-transform: uppercase; letter-spacing: .04em; }
+
+  .io-flow { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; justify-content: center; margin-top: .8rem; }
+  .io-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .7rem 1rem; text-align: center; font-size: .82rem; min-width: 85px; }
+  .io-box .io-icon { font-size: 1.4rem; display: block; margin-bottom: .3rem; }
+  .io-arrow { font-size: 1.3rem; color: var(--accent); }
+
+  .memory-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .mem-box { border-radius: 12px; padding: 1.2rem; text-align: center; }
+  .mem-box.ram { background: rgba(108,99,255,.12); border: 1px solid rgba(108,99,255,.3); }
+  .mem-box.storage { background: rgba(247,151,30,.12); border: 1px solid rgba(247,151,30,.3); }
+  .mem-box .m-icon { font-size: 2rem; }
+  .mem-box h4 { margin: .4rem 0; }
+  .mem-box p { font-size: .78rem; color: var(--muted); }
+
+  .comp-part {
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: 12px; padding: .9rem 1.2rem; text-align: center;
+    cursor: pointer; transition: var(--transition); min-width: 90px;
+  }
+  .comp-part:hover, .comp-part.active-part {
+    border-color: var(--accent); background: rgba(108,99,255,.1); transform: scale(1.04);
+  }
+  .comp-part .p-icon { font-size: 1.8rem; margin-bottom: .3rem; }
+  .comp-part .p-name { font-size: .72rem; font-weight: 600; }
+  .part-info {
+    background: rgba(108,99,255,.08); border: 1px solid rgba(108,99,255,.25);
+    border-radius: 10px; padding: 1rem; margin-top: 1rem; font-size: .87rem;
+    line-height: 1.6; display: none; animation: fadeIn .3s ease;
+  }
+  .part-info.show { display: block; }
+
+  .shortcut-item {
+    display: flex; align-items: center; gap: 1rem;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: .65rem 1rem; transition: var(--transition);
+    margin-bottom: .4rem;
+  }
+  .shortcut-item:hover { border-color: var(--accent); background: rgba(108,99,255,.06); transform: translateX(4px); }
+  .key {
+    background: var(--surface); border: 1px solid var(--border);
+    border-bottom: 3px solid var(--muted); border-radius: 5px;
+    padding: .18rem .5rem; font-family: monospace; font-size: .72rem; font-weight: 700;
+  }
+  .shortcut-desc { font-size: .83rem; color: var(--muted); }
+
+  /* ── QUIZ ── */
+  .quiz-section { margin-top: 1.5rem; }
+  .quiz-section h3 { color: var(--accent2); margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; font-size: 1rem; }
+  .quiz-q {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.3rem; margin-bottom: .9rem;
+    transition: var(--transition);
+  }
+  .quiz-q-text { font-size: .9rem; margin-bottom: .9rem; line-height: 1.5; font-weight: 600; }
+  .quiz-opts { display: flex; flex-direction: column; gap: .45rem; }
+  .quiz-opt {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: .75rem 1rem; cursor: pointer; color: var(--text);
+    font-size: .88rem; transition: var(--transition); text-align: left;
+    display: flex; align-items: center; gap: .75rem;
+  }
+  .quiz-opt:hover:not(.answered) { border-color: var(--accent); background: rgba(108,99,255,.08); transform: translateX(3px); }
+  .quiz-opt.correct { border-color: var(--accent3); background: rgba(67,233,123,.12); color: var(--accent3); }
+  .quiz-opt.wrong { border-color: var(--accent2); background: rgba(255,101,132,.12); color: var(--accent2); }
+  .quiz-opt.reveal { border-color: var(--accent3); background: rgba(67,233,123,.07); color: var(--text); }
+  .opt-letter {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--border); display: flex; align-items: center;
+    justify-content: center; font-size: .7rem; font-weight: 700; flex-shrink: 0;
+  }
+  .quiz-feedback {
+    margin-top: .7rem; font-size: .83rem; padding: .65rem .9rem;
+    border-radius: 8px; display: none; animation: fadeIn .3s ease;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: rgba(67,233,123,.08); color: var(--accent3); }
+  .quiz-feedback.wrong { background: rgba(255,101,132,.08); color: var(--accent2); }
+  .quiz-score {
+    background: linear-gradient(135deg, rgba(108,99,255,.15), rgba(255,101,132,.15));
+    border: 1px solid var(--border); border-radius: 14px;
+    padding: 1.5rem; text-align: center; margin-top: 1rem;
+    animation: scaleIn .4s ease;
+  }
+  .quiz-score .score-num { font-size: 2.5rem; font-weight: 800; color: var(--accent); }
+
+  /* ── DASHBOARD ── */
+  .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+  .dash-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.5rem; transition: var(--transition);
+  }
+  .dash-card:hover { border-color: var(--accent); box-shadow: 0 4px 24px rgba(108,99,255,.1); }
+  .dash-card h3 { font-size: .9rem; color: var(--muted); margin-bottom: 1.2rem; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* Progress per module */
+  .module-progress-list { display: flex; flex-direction: column; gap: .8rem; }
+  .mp-item { }
+  .mp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .35rem; font-size: .83rem; }
+  .mp-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .mp-fill { height: 100%; border-radius: 3px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+
+  /* Activity heatmap */
+  .heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .heat-cell {
+    aspect-ratio: 1; border-radius: 3px; background: var(--border);
+    transition: var(--transition); cursor: default;
+  }
+  .heat-cell.l1 { background: rgba(108,99,255,.2); }
+  .heat-cell.l2 { background: rgba(108,99,255,.45); }
+  .heat-cell.l3 { background: rgba(108,99,255,.75); }
+  .heat-cell.l4 { background: #6c63ff; box-shadow: 0 0 6px var(--glow); }
+  .heat-cell:hover { transform: scale(1.3); }
+
+  /* Bookmarks page */
+  .bookmarks-list { display: flex; flex-direction: column; gap: .8rem; }
+  .bookmark-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.1rem 1.4rem;
+    display: flex; align-items: center; gap: 1rem;
+    transition: var(--transition); cursor: pointer;
+  }
+  .bookmark-item:hover { border-color: var(--accent4); transform: translateX(4px); }
+  .bookmark-item .bi-icon { font-size: 1.8rem; }
+  .bookmark-item .bi-info { flex: 1; }
+  .bookmark-item .bi-title { font-weight: 600; font-size: .9rem; }
+  .bookmark-item .bi-sub { font-size: .75rem; color: var(--muted); margin-top: .2rem; }
+  .bookmark-item .bi-remove {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 1.1rem; transition: var(--transition); padding: .3rem;
+  }
+  .bookmark-item .bi-remove:hover { color: var(--accent2); }
+  .empty-state {
+    text-align: center; padding: 3rem; color: var(--muted);
+  }
+  .empty-state .e-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .4; }
+
+  /* ── TOOLS ── */
+  .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 1.3rem; }
+  .typing-practice { background: #0d0d16; border-radius: 12px; padding: 1.3rem; }
+  .typing-target { font-family: monospace; font-size: .9rem; color: var(--muted); margin-bottom: 1rem; letter-spacing: .04em; line-height: 2; }
+  .typing-target .char { transition: color .08s; }
+  .typing-target .char.correct { color: var(--accent3); }
+  .typing-target .char.wrong { color: var(--accent2); background: rgba(255,101,132,.15); border-radius: 2px; }
+  .typing-target .char.current { color: var(--text); text-decoration: underline; text-underline-offset: 4px; }
+  .typing-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: .75rem 1rem; color: var(--text);
+    font-size: .9rem; font-family: monospace; resize: none; outline: none; transition: var(--transition);
+  }
+  .typing-input:focus { border-color: var(--accent); }
+  .typing-stats { display: flex; gap: 1.5rem; margin-top: 1rem; }
+  .t-stat .t-val { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  .t-stat .t-label { font-size: .68rem; color: var(--muted); }
+
+  /* ── TOAST / BADGE ── */
+  .toast-wrap { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 500; display: flex; flex-direction: column; gap: .6rem; }
+  .toast {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: .9rem 1.3rem;
+    display: flex; align-items: center; gap: .8rem;
+    animation: slideInLeft .4s ease; min-width: 240px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    transition: var(--transition);
+  }
+  .toast.green { border-color: var(--accent3); box-shadow: 0 4px 20px rgba(67,233,123,.15); }
+  .toast.yellow { border-color: var(--accent4); box-shadow: 0 4px 20px rgba(247,151,30,.15); }
+  .toast .t-icon { font-size: 1.5rem; }
+  .toast .t-msg { font-size: .82rem; }
+  .toast .t-msg strong { display: block; color: var(--text); }
+  .toast .t-msg span { color: var(--muted); }
+
+  /* ── SEARCH RESULTS ── */
+  .search-results {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; margin-top: .5rem; overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0,0,0,.4); display: none; z-index: 60;
+  }
+  .search-results.open { display: block; animation: fadeIn .2s ease; }
+  .sr-item {
+    padding: .7rem 1rem; cursor: pointer; transition: var(--transition);
+    display: flex; align-items: center; gap: .7rem; font-size: .85rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .sr-item:last-child { border-bottom: none; }
+  .sr-item:hover { background: rgba(108,99,255,.1); color: var(--accent); }
+
+  p.lesson-text { font-size: .88rem; line-height: 1.8; color: var(--muted); margin-bottom: .8rem; }
+  p.lesson-text strong { color: var(--text); }
+  .info-pill {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: rgba(247,151,30,.12); border: 1px solid rgba(247,151,30,.3);
+    border-radius: 6px; padding: .3rem .7rem; font-size: .75rem; color: var(--accent4); margin-bottom: 1rem;
+  }
+
+  /* ── RESPONSIVE ── */
+  /* Tablet 768–1024 */
+  @media (max-width: 1024px) {
+    .sidebar { width: 200px; }
+    .main { margin-left: 200px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .topbar-search input { width: 130px; }
+    .modules-grid { grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); }
+  }
+
+  /* Small tablet / large phone landscape 600–768 */
+  @media (max-width: 768px) {
+    .sidebar {
+      transform: translateX(-100%);
+      width: 240px;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .hamburger { display: flex; }
+    .main { margin-left: 0; }
+    .topbar { padding: 0 1rem 0 4rem; }
+    .topbar-search input { width: 100px; }
+    .page { padding: 1.5rem 1rem; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); gap: .8rem; }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .lesson-panel { border-radius: 16px; }
+    .lesson-body { padding: 1.2rem; }
+    .lesson-nav { padding: .8rem 1.2rem; }
+    .memory-compare { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.9rem; }
+    .tools-grid { grid-template-columns: 1fr; }
+    .modules-grid { grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<!-- Hamburger -->
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">💻 Comp<span>Learn</span></div>
+
+  <div class="sidebar-section">Main</div>
+  <button class="sidebar-link active" data-page="home" onclick="gotoPage('home',this)">
+    <span class="s-icon">🏠</span> Home
+  </button>
+  <button class="sidebar-link" data-page="modules" onclick="gotoPage('modules',this)">
+    <span class="s-icon">📚</span> Modules
+  </button>
+  <button class="sidebar-link" data-page="quizzes" onclick="gotoPage('quizzes',this)">
+    <span class="s-icon">🧠</span> Quizzes
+  </button>
+
+  <div class="sidebar-section">Personal</div>
+  <button class="sidebar-link" data-page="dashboard" onclick="gotoPage('dashboard',this)">
+    <span class="s-icon">📊</span> Dashboard
+  </button>
+  <button class="sidebar-link" data-page="bookmarks" onclick="gotoPage('bookmarks',this)">
+    <span class="s-icon">🔖</span> Bookmarks
+  </button>
+
+  <div class="sidebar-section">Practice</div>
+  <button class="sidebar-link" data-page="tools" onclick="gotoPage('tools',this)">
+    <span class="s-icon">🛠️</span> Tools
+  </button>
+
+  <div class="sidebar-progress">
+    <div class="sidebar-progress-label">
+      <span>Overall Progress</span>
+      <span id="sidebarProgressPct">0%</span>
+    </div>
+    <div class="sidebar-progress-bar">
+      <div class="sidebar-progress-fill" id="sidebarProgressFill"></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main" id="mainContent">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-title" id="topbarTitle">Home</div>
+    <div style="position:relative;">
+      <div class="topbar-search">
+        <span>🔍</span>
+        <input type="text" placeholder="Search modules…" id="searchInput" oninput="doSearch()" onfocus="openSearch()" onblur="setTimeout(closeSearch,200)" autocomplete="off">
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </header>
+
+  <!-- HOME PAGE -->
+  <div class="page active" id="page-home">
+    <div class="hero">
+      <div class="hero-badge">🎓 Interactive Learning Platform</div>
+      <h1>Learn Computers<br><span>The Fun Way</span></h1>
+      <p>8 interactive modules, quizzes, bookmarks, notes, and practice tools — everything your need to master computer basics.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="gotoPage('modules', document.querySelector('[data-page=modules]'))">🚀 Start Learning</button>
+        <button class="btn-outline" onclick="gotoPage('dashboard', document.querySelector('[data-page=dashboard]'))">📊 My Progress</button>
+      </div>
+    </div>
+
+    <div class="stats-row" id="homeStats">
+      <div class="stat-card" style="--card-accent:#6c63ff">
+        <span class="s-icon">📚</span>
+        <div class="s-val" id="hs-modules">0/8</div>
+        <div class="s-label">Modules Completed</div>
+      </div>
+      <div class="stat-card" style="--card-accent:#43e97b">
+        <span class="s-icon">✅</span>
+        <div class="s-val" id="hs-quizzes">0</div>
+        <div class="s-label">Quiz Questions Answered</div>
+      </div>
+      <div class="stat-card" style="--card-accent:#f7971e">
+        <span class="s-icon">🔖</span>
+        <div class="s-val" id="hs-bookmarks">0</div>
+        <div class="s-label">Bookmarked Modules</div>
+      </div>
+      <div class="stat-card" style="--card-accent:#ff6584">
+        <span class="s-icon">📝</span>
+        <div class="s-val" id="hs-notes">0</div>
+        <div class="s-label">Notes Written</div>
+      </div>
+    </div>
+
+    <div class="sec-title">Continue Learning</div>
+    <div class="sec-sub">Pick up where you left off</div>
+    <div class="modules-grid" id="homeModulesGrid"></div>
+  </div>
+
+  <!-- MODULES PAGE -->
+  <div class="page" id="page-modules">
+    <div class="sec-title">📚 All Modules</div>
+    <div class="sec-sub">Click any module to open the full interactive lesson</div>
+    <div class="modules-grid" id="allModulesGrid"></div>
+  </div>
+
+  <!-- QUIZZES PAGE -->
+  <div class="page" id="page-quizzes">
+    <div class="sec-title">🧠 Quiz Hub</div>
+    <div class="sec-sub">Test your knowledge — 4 questions per module</div>
+    <div class="modules-grid" id="quizGrid"></div>
+  </div>
+
+  <!-- DASHBOARD PAGE -->
+  <div class="page" id="page-dashboard">
+    <div class="sec-title">📊 My Dashboard</div>
+    <div class="sec-sub">Track your learning progress and activity</div>
+
+    <div class="stats-row" id="dashStats" style="margin-bottom:1.5rem;">
+      <div class="stat-card" style="--card-accent:#6c63ff">
+        <span class="s-icon">🎯</span>
+        <div class="s-val" id="ds-pct">0%</div>
+        <div class="s-label">Completion Rate</div>
+      </div>
+      <div class="stat-card" style="--card-accent:#43e97b">
+        <span class="s-icon">🔥</span>
+        <div class="s-val" id="ds-streak">0</div>
+        <div class="s-label">Day Streak</div>
+      </div>
+      <div class="stat-card" style="--card-accent:#f7971e">
+        <span class="s-icon">⭐</span>
+        <div class="s-val" id="ds-score">0</div>
+        <div class="s-label">Total Points</div>
+      </div>
+      <div class="stat-card" style="--card-accent:#ff6584">
+        <span class="s-icon">⏱️</span>
+        <div class="s-val" id="ds-time">0m</div>
+        <div class="s-label">Time Spent</div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div>
+        <div class="dash-card" style="margin-bottom:1.2rem;">
+          <h3>📈 Module Progress</h3>
+          <div class="module-progress-list" id="moduleProgressList"></div>
+        </div>
+        <div class="dash-card">
+          <h3>🗓️ Activity (Last 28 Days)</h3>
+          <div class="heatmap" id="activityHeatmap"></div>
+          <div style="display:flex;gap:.8rem;margin-top:.8rem;font-size:.72rem;color:var(--muted);align-items:center;">
+            <span>Less</span>
+            <div class="heat-cell" style="width:14px;height:14px;display:inline-block;"></div>
+            <div class="heat-cell l1" style="width:14px;height:14px;display:inline-block;"></div>
+            <div class="heat-cell l2" style="width:14px;height:14px;display:inline-block;"></div>
+            <div class="heat-cell l3" style="width:14px;height:14px;display:inline-block;"></div>
+            <div class="heat-cell l4" style="width:14px;height:14px;display:inline-block;"></div>
+            <span>More</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="dash-card" style="margin-bottom:1.2rem;">
+          <h3>🏆 Achievements</h3>
+          <div id="achievementsList" style="display:flex;flex-direction:column;gap:.7rem;"></div>
+        </div>
+        <div class="dash-card">
+          <h3>📝 Recent Notes</h3>
+          <div id="recentNotes" style="font-size:.82rem;color:var(--muted);line-height:1.7;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOKMARKS PAGE -->
+  <div class="page" id="page-bookmarks">
+    <div class="sec-title">🔖 Bookmarks</div>
+    <div class="sec-sub">Your saved modules for quick access</div>
+    <div class="bookmarks-list" id="bookmarksList"></div>
+  </div>
+
+  <!-- TOOLS PAGE -->
+  <div class="page" id="page-tools">
+    <div class="sec-title">🛠️ Practice Tools</div>
+    <div class="sec-sub">Hands-on interactive exercises</div>
+    <div class="tools-grid">
+
+      <!-- Typing -->
+      <div class="visual-box">
+        <h4>⌨️ Typing Practice</h4>
+        <div class="typing-practice">
+          <div class="typing-target" id="typingTarget"></div>
+          <textarea class="typing-input" id="typingInput" rows="2" placeholder="Start typing here…" oninput="checkTyping()"></textarea>
+          <div class="typing-stats">
+            <div class="t-stat"><div class="t-val" id="wpmVal">0</div><div class="t-label">WPM</div></div>
+            <div class="t-stat"><div class="t-val" id="accVal">100%</div><div class="t-label">Accuracy</div></div>
+            <div class="t-stat"><div class="t-val" id="timeVal">60</div><div class="t-label">Seconds</div></div>
+          </div>
+          <button class="btn-primary" style="margin-top:1rem;padding:.55rem 1.1rem;font-size:.82rem;" onclick="resetTyping()">🔄 Reset</button>
+        </div>
+      </div>
+
+      <!-- Flashcards -->
+      <div class="visual-box">
+        <h4>⚡ Shortcut Flashcards</h4>
+        <div id="flashcard" style="text-align:center;padding:1.2rem;">
+          <div style="background:var(--card);border-radius:12px;padding:1.8rem;margin-bottom:1rem;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div id="fc-shortcut" style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;"></div>
+            <div id="fc-answer" style="color:var(--muted);font-size:.88rem;display:none;margin-top:.8rem;padding:.8rem;background:rgba(108,99,255,.1);border-radius:8px;"></div>
+          </div>
+          <div style="display:flex;gap:.7rem;justify-content:center;">
+            <button class="btn-outline" style="padding:.5rem .9rem;font-size:.82rem;" onclick="showFCAnswer()">👁 Reveal</button>
+            <button class="btn-primary" style="padding:.5rem .9rem;font-size:.82rem;" onclick="nextFC()">Next →</button>
+          </div>
+          <div id="fc-counter" style="margin-top:.8rem;font-size:.72rem;color:var(--muted);"></div>
+        </div>
+      </div>
+
+      <!-- File sort -->
+      <div class="visual-box">
+        <h4>📁 File Sorting Game</h4>
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:1rem;">Drag each file into the correct folder!</p>
+        <div style="display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;" id="fileItems"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem;" id="folderZones"></div>
+        <div id="sortScore" style="margin-top:.8rem;font-size:.88rem;color:var(--accent3);font-weight:600;text-align:center;"></div>
+        <button class="btn-outline" style="margin-top:.7rem;padding:.5rem 1rem;font-size:.78rem;width:100%;" onclick="resetSort()">🔄 Reset</button>
+      </div>
+
+      <!-- Password -->
+      <div class="visual-box">
+        <h4>🔐 Password Strength Checker</h4>
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:1rem;">See how strong your password is!</p>
+        <input type="text" id="pwInput" placeholder="Type a password…"
+          style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--text);font-size:.9rem;margin-bottom:.8rem;outline:none;transition:var(--transition);"
+          oninput="checkPassword()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+        <div style="height:7px;background:var(--border);border-radius:4px;margin-bottom:.7rem;overflow:hidden;">
+          <div id="pwBar" style="height:100%;width:0%;border-radius:4px;transition:width .4s cubic-bezier(.4,0,.2,1);"></div>
+        </div>
+        <div id="pwLabel" style="font-size:.83rem;margin-bottom:.7rem;font-weight:600;"></div>
+        <div id="pwTips" style="font-size:.76rem;color:var(--muted);line-height:1.9;"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- LESSON OVERLAY -->
+<div class="overlay" id="lessonOverlay">
+  <div class="lesson-panel" id="lessonPanel">
+    <div class="lesson-header">
+      <div id="lessonIcon" style="font-size:1.7rem;"></div>
+      <h2 id="lessonTitle"></h2>
+      <div class="lesson-header-actions">
+        <button class="lh-btn" id="lessonBookmarkBtn" onclick="toggleLessonBookmark()" title="Bookmark">🔖</button>
+        <button class="lh-btn close-btn" onclick="closeLesson()" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="lesson-tabs" id="lessonTabs">
+      <button class="l-tab active" onclick="switchTab('learn',this)">📖 Learn</button>
+      <button class="l-tab" onclick="switchTab('quiz',this)">🧠 Quiz</button>
+      <button class="l-tab" onclick="switchTab('notes',this)">📝 Notes</button>
+    </div>
+    <div class="lesson-body" id="lessonBody">
+      <div class="lesson-tab-content active" id="tab-learn"></div>
+      <div class="lesson-tab-content" id="tab-quiz"></div>
+      <div class="lesson-tab-content" id="tab-notes">
+        <p style="font-size:.83rem;color:var(--muted);margin-bottom:1rem;">Write your own notes for this module. They're saved automatically.</p>
+        <textarea class="notes-area" id="notesArea" placeholder="Write your notes here…" oninput="autoSaveNote()"></textarea>
+        <div style="display:flex;align-items:center;">
+          <button class="notes-save-btn" onclick="saveNote()">💾 Save Notes</button>
+          <span class="notes-saved-msg" id="notesSavedMsg">✅ Saved!</span>
+        </div>
+      </div>
+    </div>
+    <div class="lesson-nav">
+      <button onclick="prevLesson()">← Previous</button>
+      <button class="mark-done" onclick="markDone()">✓ Mark Complete</button>
+      <button onclick="nextLesson()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let completedModules = new Set();
+let bookmarkedModules = new Set();
+let notes = {};           // { moduleId: string }
+let quizAnswered = {};    // { "modId-qi": true }
+let quizCorrect = {};     // { "modId-qi": bool }
+let totalQuizAnswered = 0;
+let sessionStart = Date.now();
+let currentLesson = 0;
+let activityData = [];    // array of 28 values 0–4
+
+// generate fake past activity + today
+function initActivity() {
+  activityData = Array.from({length:28}, () => Math.floor(Math.random()*3));
+  activityData[27] = 0; // today starts at 0
+}
+
+// ══════════════════════════════════════════
+// MODULES DATA
+// ══════════════════════════════════════════
+const modules = [
+  { id:'what-is-computer', icon:'🖥️', color:'#6c63ff', title:'What is a Computer?', desc:'Learn input, processing, storage, and output.', content: buildComputerIntro,
+    quiz:[
+      {q:'What does CPU stand for?', opts:['Central Processing Unit','Computer Personal Unit','Central Power Unit','Control Processing Unit'], ans:0, exp:'CPU = Central Processing Unit — the "brain" of the computer!'},
+      {q:'Which of these is an INPUT device?', opts:['Monitor','Speakers','Keyboard','Printer'], ans:2, exp:'A keyboard sends data INTO the computer — that\'s input.'},
+      {q:'What does OUTPUT mean?', opts:['Storing data permanently','Sending commands to CPU','Showing results to the user','Running programs'], ans:2, exp:'Output shows results — on a screen, speakers, or printer.'},
+      {q:'RAM stores data…', opts:['Permanently on disk','Temporarily while running','On a USB drive','In the cloud'], ans:1, exp:'RAM is temporary — it clears when you turn off the computer!'},
+    ]},
+  { id:'hardware', icon:'⚙️', color:'#f7971e', title:'Hardware Components', desc:'CPU, RAM, GPU, SSD, Motherboard — what each part does.', content: buildHardware,
+    quiz:[
+      {q:'What is the "brain" of the computer?', opts:['RAM','GPU','CPU','SSD'], ans:2, exp:'The CPU runs all programs and performs calculations.'},
+      {q:'More RAM means…', opts:['More storage space','Faster internet','Better multitasking','Better graphics'], ans:2, exp:'RAM holds active programs — more RAM = smoother multitasking.'},
+      {q:'Which is FASTER for storage?', opts:['HDD','SSD','USB Drive','CD-ROM'], ans:1, exp:'SSD has no moving parts — much faster than HDD.'},
+      {q:'What does the GPU do?', opts:['Store files','Connect to internet','Handle graphics and visuals','Manage RAM'], ans:2, exp:'GPU = Graphics Processing Unit — handles images, videos, and games.'},
+    ]},
+  { id:'software', icon:'💿', color:'#43e97b', title:'Software & Operating Systems', desc:'System software, apps, Windows, macOS, Linux, Android.', content: buildSoftware,
+    quiz:[
+      {q:'Which is an Operating System?', opts:['Microsoft Word','Google Chrome','Windows 11','Photoshop'], ans:2, exp:'Windows 11 is an OS — it controls the hardware and runs other programs.'},
+      {q:'What type of software is Google Chrome?', opts:['System software','Application software','Operating system','Firmware'], ans:1, exp:'Chrome is application software — used for a specific task (browsing).'},
+      {q:'Which OS is made by Apple for Macs?', opts:['Windows','Linux','Android','macOS'], ans:3, exp:'macOS is Apple\'s OS for Mac computers.'},
+      {q:'Linux is…', opts:['Paid and closed-source','Free and open-source','Only for phones','Made by Microsoft'], ans:1, exp:'Linux is free, open-source, and popular with developers.'},
+    ]},
+  { id:'input-output', icon:'🖱️', color:'#ff6584', title:'Input & Output Devices', desc:'Everything that goes IN and everything that comes OUT.', content: buildIO,
+    quiz:[
+      {q:'A microphone is a…', opts:['Output device','Input device','Storage device','Processing unit'], ans:1, exp:'A microphone captures audio — sending data INTO the computer.'},
+      {q:'Which is an OUTPUT device?', opts:['Keyboard','Webcam','Scanner','Monitor'], ans:3, exp:'A monitor displays results FROM the computer — that\'s output.'},
+      {q:'A touchscreen is both…', opts:['CPU and GPU','Input and Output','RAM and ROM','Hardware and Software'], ans:1, exp:'Touchscreen receives touch (input) and displays content (output)!'},
+      {q:'What does a scanner do?', opts:['Prints documents','Scans for viruses','Converts paper to digital','Displays images'], ans:2, exp:'A scanner converts physical paper documents into digital files.'},
+    ]},
+  { id:'files', icon:'📁', color:'#a855f7', title:'File Management', desc:'Files, folders, extensions, sizes, naming, organisation.', content: buildFiles,
+    quiz:[
+      {q:'What does the ".jpg" extension mean?', opts:['A video file','A text document','An image file','A program'], ans:2, exp:'.jpg is a common image format. Other formats include .png and .gif.'},
+      {q:'How much is 1 GB?', opts:['1,000 KB','1,000 MB','1,024 MB','1,024 KB'], ans:2, exp:'1 GB = 1,024 MB. Scale: Bit → Byte → KB → MB → GB → TB.'},
+      {q:'Which is a good file name?', opts:['asdfgh','new folder (1)','History_Project_2024.docx','stuff123'], ans:2, exp:'Good names are descriptive and include dates. Avoid vague names.'},
+      {q:'What is a sub-folder?', opts:['A folder inside a folder','A type of file','A compressed archive','A file extension'], ans:0, exp:'A sub-folder is a folder placed inside another folder.'},
+    ]},
+  { id:'internet', icon:'🌐', color:'#06b6d4', title:'Internet & Networking', desc:'Internet vs Web, IP addresses, Wi-Fi, browsers, cloud.', content: buildInternet,
+    quiz:[
+      {q:'What is an IP address?', opts:['A website name','A unique number for each device','Your password','Your Wi-Fi speed'], ans:1, exp:'An IP address is a unique identifier for every device on a network.'},
+      {q:'HTTPS means…', opts:['Faster connection','The site is new','The connection is secure/encrypted','You need a password'], ans:2, exp:'The "S" in HTTPS stands for Secure — your data is encrypted.'},
+      {q:'Ethernet vs Wi-Fi — which is faster?', opts:['Wi-Fi is always faster','Ethernet cable is faster and more stable','They\'re the same','Depends on weather'], ans:1, exp:'Ethernet is faster and more stable — great for gaming or video calls.'},
+      {q:'Cloud storage means…', opts:['Storage inside the CPU','Storing files on remote internet servers','A type of RAM','External hard drive'], ans:1, exp:'Cloud storage saves files on internet servers like Google Drive.'},
+    ]},
+  { id:'shortcuts', icon:'⌨️', color:'#eab308', title:'Keyboard Shortcuts', desc:'Master Ctrl+C, Ctrl+Z, Win+L and many more.', content: buildShortcuts,
+    quiz:[
+      {q:'What does Ctrl + Z do?', opts:['Zoom in','Undo last action','Close window','Select all'], ans:1, exp:'Ctrl+Z = Undo — reverses your last action.'},
+      {q:'How do you copy selected text?', opts:['Ctrl+V','Ctrl+X','Ctrl+C','Ctrl+A'], ans:2, exp:'Ctrl+C = Copy. Then Ctrl+V to paste. Ctrl+X is cut.'},
+      {q:'Which shortcut locks the computer?', opts:['Win+D','Win+E','Win+L','Alt+F4'], ans:2, exp:'Win+L locks your computer screen.'},
+      {q:'Ctrl + Shift + T in a browser does what?', opts:['Opens Task Manager','Reopens a closed tab','Opens a new window','Translates the page'], ans:1, exp:'Ctrl+Shift+T reopens the last closed tab!'},
+    ]},
+  { id:'safety', icon:'🔐', color:'#ef4444', title:'Computer Safety & Care', desc:'Passwords, viruses, phishing, backups, physical care.', content: buildSafety,
+    quiz:[
+      {q:'A phishing email tries to…', opts:['Speed up your computer','Trick you into revealing your password','Improve your Wi-Fi','Install updates'], ans:1, exp:'Phishing emails pretend to be banks to steal your login details.'},
+      {q:'Which is the STRONGEST password?', opts:['password123','myname2005','Tr@vel$2024!','ilovepizza'], ans:2, exp:'Strong passwords mix uppercase, lowercase, numbers, and symbols.'},
+      {q:'The 3-2-1 backup rule means…', opts:['3 passwords on 2 devices for 1 year','3 copies on 2 media types with 1 off-site','Back up 3 times a month','Use 3 cloud services'], ans:1, exp:'3-2-1 = 3 copies, 2 different media, 1 stored off-site.'},
+      {q:'Why avoid public Wi-Fi for banking?', opts:['It\'s too slow','Data can be intercepted','Banks block it','It costs extra'], ans:1, exp:'Public Wi-Fi isn\'t encrypted — others could see your data!'},
+    ]},
+];
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+const pageTitles = { home:'Home', modules:'All Modules', quizzes:'Quiz Hub', dashboard:'My Dashboard', bookmarks:'Bookmarks', tools:'Practice Tools' };
+
+function gotoPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  document.getElementById('topbarTitle').textContent = pageTitles[id] || id;
+  closeSidebar();
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'bookmarks') renderBookmarks();
+  updateHomeStats();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// ══════════════════════════════════════════
+// RENDER GRIDS
+// ══════════════════════════════════════════
+function renderModuleCard(mod, i, showBookmark=true) {
+  const done = completedModules.has(mod.id);
+  const bm = bookmarkedModules.has(mod.id);
+  return `
+    <div class="module-card" style="--card-color:${mod.color}" onclick="openLesson(${i})">
+      <div class="module-icon" style="background:${mod.color}22;">${mod.icon}</div>
+      <h3>${mod.title}</h3>
+      <p>${mod.desc}</p>
+      <div class="module-meta">
+        <span class="module-badge ${done?'done':''}">${done ? '✓ Complete' : mod.quiz.length + ' questions'}</span>
+        ${showBookmark ? `<button class="bookmark-btn ${bm?'active':''}" onclick="event.stopPropagation();toggleBookmark('${mod.id}')" title="Bookmark">🔖</button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function renderAllGrids() {
+  document.getElementById('homeModulesGrid').innerHTML = modules.map((m,i) => renderModuleCard(m,i)).join('');
+  document.getElementById('allModulesGrid').innerHTML = modules.map((m,i) => renderModuleCard(m,i)).join('');
+  document.getElementById('quizGrid').innerHTML = modules.map((m,i) => `
+    <div class="module-card" style="--card-color:${m.color}" onclick="openQuizOnly(${i})">
+      <div class="module-icon" style="background:${m.color}22;">🧠</div>
+      <h3>${m.title}</h3>
+      <p>${m.quiz.length} questions to test your knowledge</p>
+      <div class="module-meta">
+        <span class="module-badge">${m.quiz.length} Questions</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+// LESSON OPEN / CLOSE
+// ══════════════════════════════════════════
+let activeTab = 'learn';
+
+function openLesson(index) {
+  currentLesson = index;
+  activeTab = 'learn';
+  renderLesson();
+  document.getElementById('lessonOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  activityData[27] = Math.min(4, (activityData[27]||0) + 1);
+}
+
+function closeLesson() {
+  document.getElementById('lessonOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function openQuizOnly(index) {
+  currentLesson = index;
+  activeTab = 'quiz';
+  renderLesson();
+  switchTab('quiz', document.querySelectorAll('.l-tab')[1]);
+  document.getElementById('lessonOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function renderLesson() {
+  const mod = modules[currentLesson];
+  document.getElementById('lessonIcon').textContent = mod.icon;
+  document.getElementById('lessonTitle').textContent = mod.title;
+
+  document.getElementById('tab-learn').innerHTML = mod.content();
+  document.getElementById('tab-quiz').innerHTML = buildQuiz(mod.id);
+  document.getElementById('notesArea').value = notes[mod.id] || '';
+
+  // bookmark btn state
+  const bbtn = document.getElementById('lessonBookmarkBtn');
+  bbtn.classList.toggle('bookmarked', bookmarkedModules.has(mod.id));
+
+  // reset tabs UI
+  document.querySelectorAll('.l-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  document.querySelectorAll('.lesson-tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-learn').classList.add('active');
+
+  if (activeTab !== 'learn') {
+    const tabs = { learn:0, quiz:1, notes:2 };
+    const tabBtns = document.querySelectorAll('.l-tab');
+    switchTab(activeTab, tabBtns[tabs[activeTab]]);
+  }
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.l-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.lesson-tab-content').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const el = document.getElementById('tab-' + name);
+  if (el) el.classList.add('active');
+}
+
+function nextLesson() { currentLesson = (currentLesson + 1) % modules.length; renderLesson(); }
+function prevLesson() { currentLesson = (currentLesson - 1 + modules.length) % modules.length; renderLesson(); }
+
+function markDone() {
+  const mod = modules[currentLesson];
+  const wasNew = !completedModules.has(mod.id);
+  completedModules.add(mod.id);
+  updateSidebarProgress();
+  renderAllGrids();
+  updateHomeStats();
+  closeLesson();
+  if (wasNew) {
+    showToast('green', '🏆', 'Module Complete!', mod.title + ' marked as done.');
+    activityData[27] = Math.min(4, (activityData[27]||0) + 2);
+  }
+}
+
+// ══════════════════════════════════════════
+// BOOKMARKS
+// ══════════════════════════════════════════
+function toggleBookmark(id) {
+  if (bookmarkedModules.has(id)) {
+    bookmarkedModules.delete(id);
+    showToast('yellow', '🔖', 'Removed Bookmark', modules.find(m=>m.id===id)?.title);
+  } else {
+    bookmarkedModules.add(id);
+    showToast('yellow', '🔖', 'Bookmarked!', modules.find(m=>m.id===id)?.title);
+  }
+  renderAllGrids();
+  updateHomeStats();
+  // update lesson bookmark btn if open
+  const bbtn = document.getElementById('lessonBookmarkBtn');
+  if (bbtn) bbtn.classList.toggle('bookmarked', bookmarkedModules.has(id));
+}
+
+function toggleLessonBookmark() {
+  const mod = modules[currentLesson];
+  toggleBookmark(mod.id);
+}
+
+function renderBookmarks() {
+  const list = document.getElementById('bookmarksList');
+  if (bookmarkedModules.size === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="e-icon">🔖</div><div>No bookmarks yet!</div><div style="font-size:.82rem;margin-top:.5rem;">Click the 🔖 icon on any module to save it here.</div></div>`;
+    return;
+  }
+  list.innerHTML = [...bookmarkedModules].map(id => {
+    const mod = modules.find(m => m.id === id);
+    const i = modules.indexOf(mod);
+    if (!mod) return '';
+    return `
+      <div class="bookmark-item" onclick="openLesson(${i});gotoPage('modules',document.querySelector('[data-page=modules]'))">
+        <div class="bi-icon">${mod.icon}</div>
+        <div class="bi-info">
+          <div class="bi-title">${mod.title}</div>
+          <div class="bi-sub">${completedModules.has(id) ? '✅ Completed' : '📖 Not started'} · ${mod.quiz.length} quiz questions</div>
+        </div>
+        <button class="bi-remove" onclick="event.stopPropagation();toggleBookmark('${id}');renderBookmarks()">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// NOTES
+// ══════════════════════════════════════════
+let noteTimer;
+function autoSaveNote() {
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(saveNote, 1500);
+}
+function saveNote() {
+  const mod = modules[currentLesson];
+  const val = document.getElementById('notesArea')?.value || '';
+  notes[mod.id] = val;
+  updateHomeStats();
+  const msg = document.getElementById('notesSavedMsg');
+  if (msg) { msg.style.opacity = '1'; setTimeout(() => msg.style.opacity = '0', 2000); }
+}
+
+// ══════════════════════════════════════════
+// QUIZ
+// ══════════════════════════════════════════
+function buildQuiz(moduleId) {
+  const mod = modules.find(m => m.id === moduleId);
+  if (!mod) return '';
+  let html = `<div class="quiz-section"><h3>🧠 Quiz — ${mod.title}</h3>`;
+  mod.quiz.forEach((q, qi) => {
+    html += `
+      <div class="quiz-q" id="qq-${moduleId}-${qi}">
+        <div class="quiz-q-text">Q${qi+1}. ${q.q}</div>
+        <div class="quiz-opts">
+          ${q.opts.map((opt, oi) => `
+            <button class="quiz-opt" onclick="answerQ('${moduleId}',${qi},${oi})">
+              <span class="opt-letter">${'ABCD'[oi]}</span>${opt}
+            </button>
+          `).join('')}
+        </div>
+        <div class="quiz-feedback" id="qf-${moduleId}-${qi}"></div>
+      </div>`;
+  });
+  html += `<div class="quiz-score" id="qs-${moduleId}" style="display:none;"></div></div>`;
+  return html;
+}
+
+function answerQ(modId, qi, chosen) {
+  const mod = modules.find(m => m.id === modId);
+  const q = mod.quiz[qi];
+  const key = `${modId}-${qi}`;
+  if (quizAnswered[key]) return;
+  quizAnswered[key] = true;
+  quizCorrect[key] = chosen === q.ans;
+  totalQuizAnswered++;
+  activityData[27] = Math.min(4, (activityData[27]||0) + 1);
+
+  const opts = document.querySelectorAll(`#qq-${modId}-${qi} .quiz-opt`);
+  const fb = document.getElementById(`qf-${modId}-${qi}`);
+  opts.forEach((o, i) => {
+    o.classList.add('answered');
+    if (i === q.ans) o.classList.add(chosen === q.ans ? 'correct' : 'reveal');
+    else if (i === chosen) o.classList.add('wrong');
+  });
+  const correct = chosen === q.ans;
+  fb.textContent = correct ? `✅ Correct! ${q.exp}` : `❌ ${q.exp}`;
+  fb.className = `quiz-feedback show ${correct ? 'correct' : 'wrong'}`;
+
+  const allAnswered = mod.quiz.every((_, i) => quizAnswered[`${modId}-${i}`]);
+  if (allAnswered) {
+    const sc = mod.quiz.filter((_, i) => quizCorrect[`${modId}-${i}`]).length;
+    const pct = Math.round((sc / mod.quiz.length) * 100);
+    const scoreEl = document.getElementById(`qs-${modId}`);
+    if (scoreEl) {
+      scoreEl.style.display = 'block';
+      scoreEl.innerHTML = `
+        <div class="score-num">${sc}/${mod.quiz.length}</div>
+        <div style="font-size:.95rem;margin-top:.3rem;">${pct>=75?'🎉 Excellent!':pct>=50?'👍 Good effort!':'📚 Review and try again!'}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem;">${pct}% correct</div>
+      `;
+      if (pct >= 75) showToast('green', '🧠', 'Quiz Done!', `You scored ${sc}/${mod.quiz.length} on ${mod.title}`);
+    }
+    updateHomeStats();
+  }
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+function renderDashboard() {
+  const pct = Math.round((completedModules.size / modules.length) * 100);
+  const streak = completedModules.size > 0 ? Math.min(completedModules.size, 7) : 0;
+  const points = completedModules.size * 100 + totalQuizAnswered * 10;
+  const elapsed = Math.round((Date.now() - sessionStart) / 60000);
+
+  document.getElementById('ds-pct').textContent = pct + '%';
+  document.getElementById('ds-streak').textContent = streak;
+  document.getElementById('ds-score').textContent = points;
+  document.getElementById('ds-time').textContent = elapsed + 'm';
+
+  // Module progress bars
+  const colors = ['#6c63ff','#f7971e','#43e97b','#ff6584','#a855f7','#06b6d4','#eab308','#ef4444'];
+  document.getElementById('moduleProgressList').innerHTML = modules.map((mod, i) => {
+    const done = completedModules.has(mod.id);
+    const qDone = mod.quiz.filter((_, qi) => quizAnswered[`${mod.id}-${qi}`]).length;
+    const qPct = Math.round((qDone / mod.quiz.length) * 100);
+    const overall = done ? 100 : qPct;
+    return `
+      <div class="mp-item">
+        <div class="mp-header">
+          <span>${mod.icon} ${mod.title}</span>
+          <span style="color:${colors[i]};font-weight:700;">${overall}%</span>
+        </div>
+        <div class="mp-bar">
+          <div class="mp-fill" style="width:${overall}%;background:${colors[i]};"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Heatmap
+  const hmap = document.getElementById('activityHeatmap');
+  hmap.innerHTML = activityData.map((v, i) => {
+    const lvl = v === 0 ? '' : v === 1 ? 'l1' : v === 2 ? 'l2' : v === 3 ? 'l3' : 'l4';
+    return `<div class="heat-cell ${lvl}" title="Day ${i+1}: ${v} activities"></div>`;
+  }).join('');
+
+  // Achievements
+  const achievements = [
+    { icon:'🎯', label:'First Step', desc:'Open your first lesson', earned: completedModules.size >= 0 && totalQuizAnswered > 0 },
+    { icon:'📚', label:'Half Way There', desc:'Complete 4 modules', earned: completedModules.size >= 4 },
+    { icon:'🏆', label:'Master Learner', desc:'Complete all 8 modules', earned: completedModules.size >= 8 },
+    { icon:'🧠', label:'Quiz Taker', desc:'Answer 10 quiz questions', earned: totalQuizAnswered >= 10 },
+    { icon:'🔖', label:'Organised', desc:'Bookmark 3 modules', earned: bookmarkedModules.size >= 3 },
+    { icon:'📝', label:'Note Taker', desc:'Write notes for a module', earned: Object.values(notes).some(n => n.length > 0) },
+  ];
+  document.getElementById('achievementsList').innerHTML = achievements.map(a => `
+    <div style="display:flex;align-items:center;gap:.8rem;padding:.6rem;border-radius:10px;background:${a.earned?'rgba(108,99,255,.1)':'var(--surface)'};border:1px solid ${a.earned?'rgba(108,99,255,.3)':'var(--border)'};transition:all .3s;">
+      <span style="font-size:1.4rem;filter:${a.earned?'none':'grayscale(1)'};opacity:${a.earned?'1':'.4'};">${a.icon}</span>
+      <div>
+        <div style="font-size:.83rem;font-weight:600;color:${a.earned?'var(--text)':'var(--muted)'};">${a.label}</div>
+        <div style="font-size:.72rem;color:var(--muted);">${a.desc}</div>
+      </div>
+      ${a.earned ? '<span style="margin-left:auto;font-size:.7rem;color:var(--accent3);font-weight:700;">EARNED</span>' : ''}
+    </div>
+  `).join('');
+
+  // Recent notes
+  const noteEntries = Object.entries(notes).filter(([,v]) => v.trim().length > 0);
+  const rn = document.getElementById('recentNotes');
+  if (noteEntries.length === 0) {
+    rn.innerHTML = '<span style="color:var(--muted);">No notes yet. Open a lesson and click the Notes tab!</span>';
+  } else {
+    rn.innerHTML = noteEntries.map(([id, text]) => {
+      const mod = modules.find(m => m.id === id);
+      return `<div style="margin-bottom:.8rem;padding:.7rem;background:var(--surface);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-size:.7rem;color:var(--accent);margin-bottom:.3rem;">${mod?.icon} ${mod?.title}</div>
+        <div style="color:var(--muted);white-space:pre-wrap;font-size:.8rem;">${text.slice(0, 120)}${text.length>120?'…':''}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ══════════════════════════════════════════
+// STATS UPDATE
+// ══════════════════════════════════════════
+function updateHomeStats() {
+  document.getElementById('hs-modules').textContent = `${completedModules.size}/8`;
+  document.getElementById('hs-quizzes').textContent = totalQuizAnswered;
+  document.getElementById('hs-bookmarks').textContent = bookmarkedModules.size;
+  document.getElementById('hs-notes').textContent = Object.values(notes).filter(n => n.trim().length > 0).length;
+}
+
+function updateSidebarProgress() {
+  const pct = Math.round((completedModules.size / modules.length) * 100);
+  document.getElementById('sidebarProgressFill').style.width = pct + '%';
+  document.getElementById('sidebarProgressPct').textContent = pct + '%';
+}
+
+// ══════════════════════════════════════════
+// SEARCH
+// ══════════════════════════════════════════
+function doSearch() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const res = document.getElementById('searchResults');
+  if (!q) { res.classList.remove('open'); return; }
+  const matches = modules.filter(m => m.title.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q));
+  if (matches.length === 0) {
+    res.innerHTML = '<div class="sr-item" style="color:var(--muted);">No results found</div>';
+  } else {
+    res.innerHTML = matches.map((m, _) => {
+      const i = modules.indexOf(m);
+      return `<div class="sr-item" onclick="openLesson(${i});closeSearch();">${m.icon} ${m.title}</div>`;
+    }).join('');
+  }
+  res.classList.add('open');
+}
+function openSearch() { if (document.getElementById('searchInput').value) doSearch(); }
+function closeSearch() { document.getElementById('searchResults').classList.remove('open'); }
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function showToast(type, icon, title, msg) {
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span class="t-icon">${icon}</span><div class="t-msg"><strong>${title}</strong><span>${msg || ''}</span></div>`;
+  wrap.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),400); }, 3000);
+}
+
+// ══════════════════════════════════════════
+// CONTENT BUILDERS
+// ══════════════════════════════════════════
+const partData = [
+  {icon:'🧠',name:'CPU',info:'The brain of the computer. Performs billions of calculations per second. Speed is measured in GHz. Example: Intel Core i5, AMD Ryzen.'},
+  {icon:'⚡',name:'RAM',info:'Temporary memory for currently running programs. More RAM = better multitasking. Common sizes: 8GB, 16GB, 32GB.'},
+  {icon:'💿',name:'SSD/HDD',info:'Permanent storage for your files. SSD (Solid State Drive) is much faster than HDD. Sizes: 256GB to 2TB+.'},
+  {icon:'🖥️',name:'Monitor',info:'Output device that displays visuals. Key specs: resolution (1080p, 4K) and refresh rate (60Hz, 144Hz).'},
+  {icon:'🃏',name:'GPU',info:'Graphics Processing Unit — handles images, videos, and games. Also used for AI and 3D rendering.'},
+  {icon:'🔌',name:'PSU',info:'Power Supply Unit — converts wall electricity into power usable by computer components. Measured in Watts.'},
+];
+
+function buildComputerIntro() {
+  return `
+    <div class="info-pill">💡 Tap each component below to learn more</div>
+    <p class="lesson-text">A computer is an <strong>electronic device</strong> that receives data, processes it, stores it, and produces results. It follows instructions from programs called <strong>software</strong>.</p>
+    <div class="visual-box">
+      <h4>🔄 The Core Cycle</h4>
+      <div class="io-flow">
+        <div class="io-box"><span class="io-icon">⌨️</span>Input<br><small style="color:var(--muted)">Keyboard, Mouse</small></div>
+        <div class="io-arrow">→</div>
+        <div class="io-box"><span class="io-icon">🧠</span>Process<br><small style="color:var(--muted)">CPU</small></div>
+        <div class="io-arrow">→</div>
+        <div class="io-box"><span class="io-icon">💾</span>Store<br><small style="color:var(--muted)">RAM / SSD</small></div>
+        <div class="io-arrow">→</div>
+        <div class="io-box"><span class="io-icon">🖥️</span>Output<br><small style="color:var(--muted)">Monitor, Sound</small></div>
+      </div>
+    </div>
+    <div class="visual-box">
+      <h4>🖥️ Click Each Part to Learn What It Does</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:.8rem;justify-content:center;">
+        ${partData.map((p,i)=>`
+          <div class="comp-part" onclick="togglePart(${i})" id="part-${i}">
+            <div class="p-icon">${p.icon}</div>
+            <div class="p-name">${p.name}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="part-info" id="partInfo"></div>
+    </div>
+    <div class="visual-box">
+      <h4>🗂️ RAM vs Storage</h4>
+      <div class="memory-compare">
+        <div class="mem-box ram"><div class="m-icon">📋</div><h4 style="color:#6c63ff">RAM</h4><p>Like your <strong>desk</strong> — working space. Fast but cleared on shutdown.</p></div>
+        <div class="mem-box storage"><div class="m-icon">🗄️</div><h4 style="color:#f7971e">Storage</h4><p>Like a <strong>filing cabinet</strong> — permanent. Keeps files even after shutdown.</p></div>
+      </div>
+    </div>
+  `;
+}
+
+function togglePart(i) {
+  const info = document.getElementById('partInfo');
+  const part = document.querySelector(`#part-${i}`);
+  if (!part) return;
+  const wasActive = part.classList.contains('active-part');
+  document.querySelectorAll('.comp-part').forEach(p => p.classList.remove('active-part'));
+  if (wasActive) { info.classList.remove('show'); return; }
+  part.classList.add('active-part');
+  info.innerHTML = `<strong>${partData[i].icon} ${partData[i].name}:</strong> ${partData[i].info}`;
+  info.classList.add('show');
+}
+
+function buildHardware() {
+  const parts = [
+    {icon:'🧠',name:'CPU',color:'#6c63ff',desc:'The "brain" that runs all programs. Speed measured in GHz. Multiple cores handle parallel tasks.',example:'Intel Core i9, AMD Ryzen 7'},
+    {icon:'⚡',name:'RAM',color:'#43e97b',desc:'Temporary working memory. Programs load here when running. Cleared on shutdown.',example:'8GB, 16GB, 32GB DDR5'},
+    {icon:'💿',name:'SSD',color:'#f7971e',desc:'Permanent storage. No moving parts = much faster than old HDD. Stores all your files.',example:'Samsung 980 Pro 1TB'},
+    {icon:'🖥️',name:'GPU',color:'#ff6584',desc:'Graphics Processing Unit. Handles visuals, games, video. High-end GPUs used for AI too.',example:'NVIDIA RTX 4070'},
+    {icon:'🔲',name:'Motherboard',color:'#a855f7',desc:'The main circuit board. Everything plugs into it — CPU, RAM, GPU, storage.',example:'ASUS ROG Strix B650-E'},
+    {icon:'🔌',name:'PSU',color:'#06b6d4',desc:'Power Supply Unit. Converts wall power (AC) to computer-usable power (DC). Measured in Watts.',example:'650W Gold Rated'},
+    {icon:'❄️',name:'Cooling',color:'#eab308',desc:'Fans and heatsinks remove heat from CPU & GPU. Advanced builds use liquid cooling.',example:'Noctua NH-D15'},
+    {icon:'📺',name:'Monitor',color:'#ef4444',desc:'Displays visuals. Key specs: resolution (1080p/4K), refresh rate (60Hz/144Hz), panel (IPS/VA).',example:'27" 1440p 165Hz IPS'},
+  ];
+  return `
+    <p class="lesson-text">Hardware is the <strong>physical parts</strong> of a computer. Each part has a specific job.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;margin:1.2rem 0;">
+      ${parts.map(p=>`
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem;transition:var(--transition);cursor:default;"
+          onmouseenter="this.style.borderColor='${p.color}';this.style.transform='translateY(-3px)'"
+          onmouseleave="this.style.borderColor='var(--border)';this.style.transform='none'">
+          <div style="font-size:1.8rem;margin-bottom:.4rem;">${p.icon}</div>
+          <div style="font-weight:700;color:${p.color};margin-bottom:.3rem;">${p.name}</div>
+          <p style="font-size:.79rem;color:var(--muted);line-height:1.5;margin-bottom:.5rem;">${p.desc}</p>
+          <div style="font-size:.72rem;color:var(--muted);background:var(--surface);padding:.25rem .5rem;border-radius:5px;display:inline-block;">eg. ${p.example}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="visual-box">
+      <h4>📊 RAM Size Guide</h4>
+      ${[['4GB','Minimum — barely runs modern OS','20%'],['8GB','Good for everyday use','45%'],['16GB','Recommended for most users','70%'],['32GB','Power users, video editing','100%']].map(([size,label,w])=>`
+        <div style="margin-bottom:.8rem;">
+          <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:.3rem;"><span>${size}</span><span style="color:var(--muted)">${label}</span></div>
+          <div style="height:7px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="height:100%;width:${w};background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;"></div></div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function buildSoftware() {
+  const oses = [
+    {icon:'🪟',name:'Windows',desc:'Most popular for PCs. Made by Microsoft.',color:'#06b6d4'},
+    {icon:'🍎',name:'macOS',desc:'Apple\'s OS for Mac — clean design, creative apps.',color:'#888'},
+    {icon:'🐧',name:'Linux',desc:'Free & open-source. Loved by developers.',color:'#f7971e'},
+    {icon:'🤖',name:'Android',desc:'Google\'s OS for smartphones and tablets.',color:'#43e97b'},
+    {icon:'📱',name:'iOS',desc:'Apple\'s mobile OS for iPhone and iPad.',color:'#a8b8c8'},
+    {icon:'🌐',name:'Chrome OS',desc:'Google\'s lightweight OS for Chromebooks.',color:'#ef4444'},
+  ];
+  return `
+    <p class="lesson-text">Software is <strong>instructions</strong> that tell hardware what to do. Two main types: <strong>System Software</strong> (controls the computer) and <strong>Application Software</strong> (does tasks for you).</p>
+    <div class="visual-box">
+      <h4>🏗️ Software Layers</h4>
+      <div style="text-align:center;">
+        ${[
+          {label:'Your Apps',sub:'Chrome, Word, Games, Spotify',color:'rgba(108,99,255,.2)',border:'rgba(108,99,255,.5)'},
+          {label:'Operating System',sub:'Windows / macOS / Linux',color:'rgba(247,151,30,.2)',border:'rgba(247,151,30,.5)'},
+          {label:'Hardware',sub:'CPU, RAM, SSD, GPU…',color:'rgba(67,233,123,.2)',border:'rgba(67,233,123,.5)'},
+        ].map(l=>`
+          <div style="background:${l.color};border:1px solid ${l.border};border-radius:10px;padding:.75rem 1.2rem;margin-bottom:.5rem;">
+            <div style="font-weight:700;">${l.label}</div>
+            <div style="font-size:.75rem;color:var(--muted);">${l.sub}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="visual-box">
+      <h4>💻 Operating Systems</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.8rem;">
+        ${oses.map(os=>`
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.9rem;transition:var(--transition);cursor:default;"
+            onmouseenter="this.style.borderColor='${os.color}'" onmouseleave="this.style.borderColor='var(--border)'">
+            <div style="font-size:1.6rem;margin-bottom:.4rem;">${os.icon}</div>
+            <div style="font-weight:700;color:${os.color};margin-bottom:.2rem;">${os.name}</div>
+            <div style="font-size:.76rem;color:var(--muted);line-height:1.5;">${os.desc}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function buildIO() {
+  return `
+    <p class="lesson-text">Computers communicate through <strong>Input</strong> (data going IN) and <strong>Output</strong> (results coming OUT). Some devices do both!</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.2rem 0;">
+      <div class="visual-box" style="margin:0;">
+        <h4 style="color:#43e97b;">⬇️ Input Devices</h4>
+        ${[['⌨️','Keyboard','Types text & commands'],['🖱️','Mouse','Point, click & select'],['🎙️','Microphone','Records audio'],['📸','Webcam','Captures video'],['📄','Scanner','Paper → digital'],['🕹️','Joystick','Gaming controls']].map(([icon,name,desc])=>`
+          <div style="display:flex;align-items:center;gap:.7rem;padding:.55rem 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:1.3rem;">${icon}</span>
+            <div><div style="font-size:.83rem;font-weight:600;">${name}</div><div style="font-size:.72rem;color:var(--muted);">${desc}</div></div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="visual-box" style="margin:0;">
+        <h4 style="color:#ff6584;">⬆️ Output Devices</h4>
+        ${[['🖥️','Monitor','Displays visuals'],['🖨️','Printer','Paper copies'],['🔊','Speakers','Audio output'],['🎧','Headphones','Personal audio'],['📽️','Projector','Large display'],['⌚','Haptic','Vibration feedback']].map(([icon,name,desc])=>`
+          <div style="display:flex;align-items:center;gap:.7rem;padding:.55rem 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:1.3rem;">${icon}</span>
+            <div><div style="font-size:.83rem;font-weight:600;">${name}</div><div style="font-size:.72rem;color:var(--muted);">${desc}</div></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="visual-box">
+      <h4>🤔 Touchscreen — Input AND Output!</h4>
+      <div style="display:flex;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap;text-align:center;">
+        <div style="background:rgba(67,233,123,.1);border:1px solid rgba(67,233,123,.3);border-radius:12px;padding:1rem 1.5rem;"><div style="font-size:1.8rem;">👆</div><div style="color:#43e97b;font-weight:700;">Input</div><div style="font-size:.75rem;color:var(--muted);">Your touch</div></div>
+        <div style="font-size:1.8rem;">↔️</div>
+        <div style="background:rgba(255,101,132,.1);border:1px solid rgba(255,101,132,.3);border-radius:12px;padding:1rem 1.5rem;"><div style="font-size:1.8rem;">📱</div><div style="color:#ff6584;font-weight:700;">Output</div><div style="font-size:.75rem;color:var(--muted);">Screen display</div></div>
+      </div>
+    </div>
+  `;
+}
+
+function buildFiles() {
+  return `
+    <p class="lesson-text">Think of your computer like a big office. <strong>Folders</strong> are filing cabinets. <strong>Files</strong> are the actual papers inside them.</p>
+    <div class="visual-box">
+      <h4>📂 File System Structure</h4>
+      <div style="font-family:monospace;font-size:.82rem;line-height:2;background:#0d0d16;border-radius:10px;padding:1.1rem;color:#43e97b;">
+        <div style="color:#f7971e;">📁 C:\\Users\\YourName\\</div>
+        <div style="padding-left:1.5rem;"><div style="color:#f7971e;">📁 Documents\\</div>
+          <div style="padding-left:1.5rem;"><div style="color:#f7971e;">📁 School\\</div>
+            <div style="padding-left:1.5rem;"><div style="color:#aaa;">📄 Math_Notes.docx</div><div style="color:#aaa;">📊 Science_Project.pptx</div></div>
+          </div>
+        </div>
+        <div style="padding-left:1.5rem;"><div style="color:#f7971e;">📁 Pictures\\</div><div style="padding-left:1.5rem;color:#aaa;">🖼️ birthday_photo.jpg</div></div>
+        <div style="padding-left:1.5rem;"><div style="color:#f7971e;">📁 Downloads\\</div></div>
+      </div>
+    </div>
+    <div class="visual-box">
+      <h4>📎 Common File Extensions</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:.6rem;">
+        ${[['.docx','📝','Word Doc','#6c63ff'],['.pdf','📕','PDF','#ef4444'],['.jpg .png','🖼️','Images','#f7971e'],['.mp4','🎬','Video','#ff6584'],['.mp3','🎵','Audio','#43e97b'],['.zip','📦','Archive','#a855f7'],['.exe','⚙️','Program','#06b6d4'],['.xlsx','📊','Spreadsheet','#22c55e']].map(([ext,icon,name,color])=>`
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.55rem .8rem;text-align:center;min-width:80px;">
+            <div style="font-size:1.3rem;">${icon}</div>
+            <div style="font-size:.75rem;font-weight:700;color:${color};">${ext}</div>
+            <div style="font-size:.68rem;color:var(--muted);">${name}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="visual-box">
+      <h4>📏 File Size Units</h4>
+      <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;justify-content:center;">
+        ${['Bit','Byte','KB','MB','GB','TB'].map((unit,i)=>`
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.55rem .7rem;text-align:center;min-width:55px;">
+            <div style="font-size:${.72+i*.07}rem;font-weight:700;color:var(--accent);">${unit}</div>
+          </div>
+          ${i<5?'<span style="color:var(--muted)">→</span>':''}
+        `).join('')}
+      </div>
+      <p style="text-align:center;font-size:.78rem;color:var(--muted);margin-top:.8rem;">1 GB = 1,024 MB · 1 TB = 1,024 GB</p>
+    </div>
+  `;
+}
+
+function buildInternet() {
+  return `
+    <p class="lesson-text">The <strong>Internet</strong> is the global network of computers. The <strong>World Wide Web</strong> is just one service on it — along with email, video calls, and more.</p>
+    <div class="visual-box">
+      <h4>🌐 How the Internet Works</h4>
+      <div style="display:flex;align-items:center;justify-content:center;gap:.8rem;flex-wrap:wrap;text-align:center;">
+        ${[['💻','Your PC'],['📶','Router'],['🏢','ISP'],['🌍','Internet'],['🖥️','Website']].map(([icon,label],i,arr)=>`
+          <div style="background:var(--surface);border:2px solid ${i===0||i===arr.length-1?'var(--accent3)':'var(--border)'};border-radius:10px;padding:.8rem;min-width:70px;">
+            <div style="font-size:1.4rem;">${icon}</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:.2rem;">${label}</div>
+          </div>
+          ${i<arr.length-1?'<div style="height:2px;width:24px;background:linear-gradient(90deg,var(--accent),var(--accent2));animation:pulse 1.5s infinite;border-radius:2px;"></div>':''}
+        `).join('')}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0;">
+      <div class="visual-box" style="margin:0;">
+        <h4>📶 Wi-Fi vs Ethernet</h4>
+        <div style="margin-bottom:.8rem;"><div style="font-weight:700;margin-bottom:.2rem;">📡 Wi-Fi</div><div style="font-size:.8rem;color:var(--muted);">Wireless. Convenient but variable in speed.</div></div>
+        <div><div style="font-weight:700;color:#43e97b;margin-bottom:.2rem;">🔌 Ethernet</div><div style="font-size:.8rem;color:var(--muted);">Cable. Faster and more stable. Best for gaming.</div></div>
+      </div>
+      <div class="visual-box" style="margin:0;">
+        <h4>🔒 HTTP vs HTTPS</h4>
+        <div style="margin-bottom:.8rem;"><div style="font-weight:700;color:#ef4444;margin-bottom:.2rem;">⚠️ http://</div><div style="font-size:.8rem;color:var(--muted);">Not secure. Avoid entering passwords here.</div></div>
+        <div><div style="font-weight:700;color:#43e97b;margin-bottom:.2rem;">✅ https://</div><div style="font-size:.8rem;color:var(--muted);">Secure and encrypted. Look for 🔒 in browser bar.</div></div>
+      </div>
+    </div>
+    <div class="visual-box">
+      <h4>☁️ Cloud Storage</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:.7rem;">
+        ${[['📁','Google Drive','Free 15GB'],['🌨️','OneDrive','Free 5GB'],['🍎','iCloud','Free 5GB'],['📦','Dropbox','Free 2GB']].map(([icon,name,note])=>`
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.7rem 1rem;text-align:center;min-width:110px;">
+            <div style="font-size:1.5rem;">${icon}</div>
+            <div style="font-weight:700;font-size:.83rem;">${name}</div>
+            <div style="font-size:.7rem;color:var(--muted);">${note}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function buildShortcuts() {
+  const shortcuts = [
+    {keys:['Ctrl','C'],desc:'Copy selected item'},{keys:['Ctrl','X'],desc:'Cut selected item'},{keys:['Ctrl','V'],desc:'Paste'},
+    {keys:['Ctrl','Z'],desc:'Undo last action'},{keys:['Ctrl','Y'],desc:'Redo'},{keys:['Ctrl','A'],desc:'Select all'},
+    {keys:['Ctrl','S'],desc:'Save file'},{keys:['Ctrl','F'],desc:'Find on page'},{keys:['Alt','F4'],desc:'Close application'},
+    {keys:['Win','L'],desc:'Lock computer'},{keys:['Win','E'],desc:'Open File Explorer'},{keys:['Win','D'],desc:'Show/hide desktop'},
+    {keys:['Ctrl','T'],desc:'Open new browser tab'},{keys:['Ctrl','Shift','T'],desc:'Reopen closed tab'},
+    {keys:['Ctrl','W'],desc:'Close current tab'},{keys:['F2'],desc:'Rename selected file'},
+    {keys:['Ctrl','Shift','Esc'],desc:'Open Task Manager'},{keys:['Win','Shift','S'],desc:'Screenshot a region'},
+  ];
+  return `
+    <p class="lesson-text">Keyboard shortcuts save huge amounts of time. Learning them bit by bit makes you <strong>faster than anyone using only a mouse.</strong></p>
+    <div class="visual-box">
+      <h4>⚡ Essential Windows Shortcuts</h4>
+      ${shortcuts.map(s=>`
+        <div class="shortcut-item">
+          <div style="display:flex;gap:.3rem;flex-shrink:0;">
+            ${s.keys.map(k=>`<span class="key">${k}</span>`).join('<span style="font-size:.78rem;color:var(--muted);padding:0 .1rem">+</span>')}
+          </div>
+          <div class="shortcut-desc">${s.desc}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="visual-box" style="text-align:center;">
+      <h4>💡 Mac Users</h4>
+      <div style="display:flex;justify-content:center;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <div style="background:rgba(108,99,255,.12);border-radius:10px;padding:.7rem 1.3rem;"><span class="key">Ctrl</span><span style="color:var(--muted);margin:0 .4rem">→</span><span class="key">⌘ Cmd</span></div>
+        <div style="font-size:.82rem;color:var(--muted);">Most shortcuts work the same!</div>
+      </div>
+    </div>
+  `;
+}
+
+function buildSafety() {
+  return `
+    <p class="lesson-text">Staying safe online is just as important as using a computer. <strong>Simple habits protect you from most threats.</strong></p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;margin:1rem 0;">
+      ${[
+        {icon:'🔑',title:'Strong Passwords',desc:'Mix uppercase, lowercase, numbers & symbols. Never use your name or birthday. Use different passwords for each account.',color:'#6c63ff'},
+        {icon:'🎣',title:'Phishing Emails',desc:'Fake emails pretending to be banks or services. Always check the sender\'s actual email. Never click suspicious links.',color:'#ef4444'},
+        {icon:'🛡️',title:'Antivirus',desc:'Windows Defender is free and built-in. Never download from unknown sites or click pop-up ads claiming your PC has a virus.',color:'#43e97b'},
+        {icon:'🔄',title:'Keep Updated',desc:'OS and app updates fix security holes that hackers can exploit. Enable auto-updates for peace of mind.',color:'#f7971e'},
+        {icon:'💾',title:'3-2-1 Backups',desc:'3 copies of data, on 2 different media types, with 1 copy off-site (like cloud storage).',color:'#a855f7'},
+        {icon:'📶',title:'Public Wi-Fi',desc:'Public Wi-Fi is not encrypted. Avoid banking or entering passwords. Use mobile data or a VPN for sensitive tasks.',color:'#06b6d4'},
+      ].map(c=>`
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem;border-top:3px solid ${c.color};transition:var(--transition);"
+          onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform='none'">
+          <div style="font-size:1.5rem;margin-bottom:.4rem;">${c.icon}</div>
+          <div style="font-weight:700;margin-bottom:.3rem;color:${c.color};">${c.title}</div>
+          <p style="font-size:.78rem;color:var(--muted);line-height:1.5;">${c.desc}</p>
+        </div>
+      `).join('')}
+    </div>
+    <div class="visual-box">
+      <h4>🔐 Password Strength Examples</h4>
+      ${[['password123','#ef4444','▓░░░░','Terrible'],['myname2005','#f7971e','▓▓░░░','Weak'],['Comput3r!','#eab308','▓▓▓░░','Okay'],['Tr@vel$2024!','#43e97b','▓▓▓▓▓','Strong']].map(([pw,color,bar,label])=>`
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.65rem;">
+          <code style="background:var(--surface);padding:.25rem .5rem;border-radius:5px;font-size:.78rem;min-width:130px;">${pw}</code>
+          <span style="color:${color};font-size:.88rem;">${bar}</span>
+          <span style="font-size:.76rem;color:var(--muted);">${label}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════
+// TYPING TOOL
+// ══════════════════════════════════════════
+const typingSentences = [
+  'The keyboard is an input device used to type text.',
+  'A computer processes data using the central processing unit.',
+  'Save your files often using Control and S together.',
+  'The monitor displays output from the computer.',
+  'RAM is temporary memory that clears when you shutdown.',
+  'Always use strong passwords with numbers and symbols.',
+];
+let typingTimer = null, typingStart = null, timeLeft = 60;
+
+function initTyping() {
+  const sentence = typingSentences[Math.floor(Math.random()*typingSentences.length)];
+  const target = document.getElementById('typingTarget');
+  if (!target) return;
+  target.innerHTML = sentence.split('').map((c,i)=>`<span class="char" data-i="${i}">${c}</span>`).join('');
+  const inp = document.getElementById('typingInput');
+  if (inp) { inp.value = ''; inp.disabled = false; }
+  timeLeft = 60;
+  ['timeVal','wpmVal'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent = id==='timeVal'?'60':'0'; });
+  const acc = document.getElementById('accVal'); if(acc) acc.textContent='100%';
+  if (typingTimer) clearInterval(typingTimer);
+  typingStart = null;
+}
+
+function resetTyping() { initTyping(); }
+
+function checkTyping() {
+  const inp = document.getElementById('typingInput');
+  if (!inp) return;
+  if (!typingStart) {
+    typingStart = Date.now();
+    typingTimer = setInterval(()=>{
+      timeLeft--;
+      const el = document.getElementById('timeVal'); if(el) el.textContent=timeLeft;
+      if (timeLeft<=0) { clearInterval(typingTimer); inp.disabled=true; }
+    },1000);
+  }
+  const typed = inp.value;
+  document.querySelectorAll('#typingTarget .char').forEach((ch,i)=>{
+    ch.className='char';
+    if(i<typed.length){ if(typed[i]===ch.textContent){ ch.classList.add('correct'); } else { ch.classList.add('wrong'); } }
+    else if(i===typed.length) ch.classList.add('current');
+  });
+  const correct = [...document.querySelectorAll('#typingTarget .char.correct')].length;
+  const elapsed = (Date.now()-typingStart)/60000;
+  const words = typed.trim().split(/\s+/).length;
+  const wpm = elapsed>0?Math.round(words/elapsed):0;
+  const acc = typed.length>0?Math.round((correct/typed.length)*100):100;
+  const wpmEl=document.getElementById('wpmVal'); if(wpmEl) wpmEl.textContent=wpm;
+  const accEl=document.getElementById('accVal'); if(accEl) accEl.textContent=acc+'%';
+}
+
+// ══════════════════════════════════════════
+// FLASHCARDS
+// ══════════════════════════════════════════
+const flashcards = [
+  {shortcut:'Ctrl + C',answer:'Copy selected item'},{shortcut:'Ctrl + V',answer:'Paste'},{shortcut:'Ctrl + Z',answer:'Undo last action'},
+  {shortcut:'Ctrl + A',answer:'Select all'},{shortcut:'Ctrl + S',answer:'Save file'},{shortcut:'Win + L',answer:'Lock the computer'},
+  {shortcut:'Ctrl + Shift + T',answer:'Reopen closed browser tab'},{shortcut:'Alt + F4',answer:'Close current application'},
+  {shortcut:'Win + E',answer:'Open File Explorer'},{shortcut:'F2',answer:'Rename selected file or folder'},
+  {shortcut:'Ctrl + F',answer:'Find / Search on page'},{shortcut:'Ctrl + T',answer:'Open new browser tab'},
+  {shortcut:'Win + D',answer:'Show or hide the desktop'},{shortcut:'Ctrl + Shift + Esc',answer:'Open Task Manager'},
+  {shortcut:'Win + Shift + S',answer:'Screenshot a region'},
+];
+let fcIndex=0;
+function renderFC() {
+  const fc=flashcards[fcIndex];
+  const s=document.getElementById('fc-shortcut');
+  const a=document.getElementById('fc-answer');
+  const c=document.getElementById('fc-counter');
+  if(!s) return;
+  s.innerHTML=fc.shortcut.split('+').map(k=>`<span class="key" style="font-size:.95rem;padding:.25rem .55rem;">${k.trim()}</span>`).join(' <span style="color:var(--muted)">+</span> ');
+  if(a){a.textContent=fc.answer;a.style.display='none';}
+  if(c) c.textContent=`${fcIndex+1} / ${flashcards.length}`;
+}
+function showFCAnswer(){const a=document.getElementById('fc-answer');if(a)a.style.display='block';}
+function nextFC(){fcIndex=(fcIndex+1)%flashcards.length;renderFC();}
+
+// ══════════════════════════════════════════
+// FILE SORT GAME
+// ══════════════════════════════════════════
+const sortFiles=[
+  {name:'photo.jpg',icon:'🖼️',folder:'Pictures'},{name:'essay.docx',icon:'📝',folder:'Documents'},
+  {name:'song.mp3',icon:'🎵',folder:'Music'},{name:'vacation.jpg',icon:'🖼️',folder:'Pictures'},
+  {name:'report.pdf',icon:'📕',folder:'Documents'},{name:'album.mp3',icon:'🎵',folder:'Music'},
+];
+const sortFolders=['Documents','Pictures','Music'];
+let sortState={}, dragItem=null;
+
+function resetSort() {
+  sortState={};
+  const items=document.getElementById('fileItems');
+  const zones=document.getElementById('folderZones');
+  const score=document.getElementById('sortScore');
+  if(!items||!zones) return;
+  items.innerHTML=sortFiles.map((f,i)=>`
+    <div style="display:flex;align-items:center;gap:.4rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.45rem .7rem;margin-bottom:.3rem;cursor:grab;font-size:.8rem;transition:var(--transition);user-select:none;"
+      draggable="true" id="sf-${i}"
+      ondragstart="dragItem=${i}"
+      onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">
+      ${f.icon} ${f.name}
+    </div>
+  `).join('');
+  zones.innerHTML=sortFolders.map(folder=>`
+    <div style="background:var(--surface);border:2px dashed var(--border);border-radius:10px;padding:.8rem;min-height:100px;transition:var(--transition);"
+      id="fz-${folder}"
+      ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='rgba(108,99,255,.08)'"
+      ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--surface)'"
+      ondrop="dropFile(event,'${folder}')">
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.05em;">📁 ${folder}</div>
+    </div>
+  `).join('');
+  if(score) score.textContent='';
+}
+
+function dropFile(e, folder) {
+  e.preventDefault();
+  e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.background='var(--surface)';
+  if(dragItem===null) return;
+  const file=sortFiles[dragItem];
+  const el=document.getElementById(`sf-${dragItem}`);
+  if(el){
+    const correct=file.folder===folder;
+    el.style.borderColor=correct?'#43e97b':'#ff6584';
+    el.style.cursor='default';
+    e.currentTarget.appendChild(el);
+    sortState[dragItem]=correct;
+    if(Object.keys(sortState).length===sortFiles.length){
+      const sc=Object.values(sortState).filter(Boolean).length;
+      const s=document.getElementById('sortScore');
+      if(s) s.textContent=`${sc}/${sortFiles.length} correct! ${sc===sortFiles.length?'🎉 Perfect!':'Keep practicing!'}`;
+    }
+  }
+  dragItem=null;
+}
+
+// ══════════════════════════════════════════
+// PASSWORD CHECKER
+// ══════════════════════════════════════════
+function checkPassword() {
+  const pw=document.getElementById('pwInput')?.value||'';
+  const bar=document.getElementById('pwBar');
+  const label=document.getElementById('pwLabel');
+  const tips=document.getElementById('pwTips');
+  if(!bar) return;
+  const checks=[
+    [pw.length>=8,'At least 8 characters'],
+    [/[A-Z]/.test(pw),'Uppercase letter'],
+    [/[a-z]/.test(pw),'Lowercase letter'],
+    [/[0-9]/.test(pw),'A number'],
+    [/[^A-Za-z0-9]/.test(pw),'A symbol (!, @, #…)'],
+    [pw.length>=12,'At least 12 characters'],
+  ];
+  const score=checks.filter(c=>c[0]).length;
+  const pct=Math.round((score/6)*100);
+  bar.style.width=pct+'%';
+  const colors=['#ef4444','#f7971e','#eab308','#43e97b','#43e97b','#6c63ff'];
+  const labels=['Very Weak','Weak','Fair','Good','Strong','Very Strong'];
+  bar.style.background=colors[Math.min(score,5)];
+  if(label){label.textContent=pw.length===0?'':labels[Math.min(score,5)];label.style.color=colors[Math.min(score,5)];}
+  if(tips) tips.innerHTML=checks.map(([pass,text])=>`<span style="color:${pass?'#43e97b':'var(--muted)'};">${pass?'✅':'○'} ${text}</span><br>`).join('');
+}
+
+// ══════════════════════════════════════════
+// STARS
+// ══════════════════════════════════════════
+function createStars() {
+  const canvas=document.createElement('canvas');
+  canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;';
+  document.getElementById('stars').appendChild(canvas);
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  for(let i=0;i<100;i++){
+    const x=Math.random()*canvas.width, y=Math.random()*canvas.height, r=Math.random()*1.4;
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${Math.random()*.4+.08})`; ctx.fill();
+  }
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  createStars();
+  initActivity();
+  renderAllGrids();
+  initTyping();
+  renderFC();
+  resetSort();
+  updateHomeStats();
+  updateSidebarProgress();
+});
+
+document.getElementById('lessonOverlay').addEventListener('click', e => {
+  if(e.target===document.getElementById('lessonOverlay')) closeLesson();
+});
+</script>
+</body>
+</html>
